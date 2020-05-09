@@ -12,3 +12,10 @@ the questions, and wish to bring you on the project.
 Your role is to create a database for this analysis. 
 You'll be able to test your database by running queries 
 given to you by the analytics team from Sparkify to create the results.
+
+## To run
+>> docker-compose up
+>
+>> cd src/script 
+>
+>>python etl.py
