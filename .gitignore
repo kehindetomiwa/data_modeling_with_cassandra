@@ -1,0 +1,10 @@
+event_data
+.env
+env
+.git
+.idea/*
+.idea
+*.pyc
+*.ipynb_checkpoints
+*__pycache*
+.DS_Store
