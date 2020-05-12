@@ -3,19 +3,34 @@ from cassandra.cluster import Cluster
 from file_loader import process_files
 from queries import *
 
+try:
+    cluster = Cluster()
+    session = cluster.connect()
+except Exception as e:
+    print(e)
+
+
+def create_or_drop_table(query):
+    try:
+        session.execute(query)
+    except Exception as e:
+        print(e)
+
+
+def select_rows(query):
+    try:
+        rows = session.execute(query)
+    except Exception as e:
+        print(e)
+
+    for row in rows:
+        print(list(row))
 
 
 def main():
     path = '/../../event_data/'
-    #create the small file
+
     process_files(path)
-
-    try:
-        cluster = Cluster()
-        session = cluster.connect()
-    except Exception as e:
-        print(e)
-
     try:
         session.execute(create_keyspace_music_db)
     except Exception as e:
@@ -29,60 +44,33 @@ def main():
     df = pd.read_csv('event_datafile_new.csv', encoding='utf8')
     print(df.head())
 
-    try:
-        session.execute(music_history_table)
-    except Exception as e:
-        print(e)
+    create_or_drop_table(music_history_table)
 
     for i, row in df.iterrows():
-        session.execute(music_history_insert, (row.sessionId,
-                                               row.itemInSession,
-                                               row.artist, row.song,
-                                               row.length))
-    try:
-        rows = session.execute(music_history_select)
-    except Exception as e:
-        print(e)
+        query = "INSERT INTO music_history (session_id, itemInSession, artist, song, length)"
+        query += "VALUES(%s, %s, %s, %s, %s)"
+        session.execute(query, (row.sessionId, row.itemInSession, row.artist, row.song, row.length))
 
-    for row in rows:
-        print(row)
+    select_rows(music_history_select)
 
-
-    try:
-        session.execute(user_history_table)
-    except Exception as e:
-        print(e)
+    create_or_drop_table(user_history_table)
 
     for i, row in df.iterrows():
-        session.execute(user_history_insert, (row.userId,
-                                row.sessionId,
-                                row.itemInSession,
-                                row.artist, row.song,
-                                f'{row.firstName} {row.lastName}'))
+        query = "INSERT INTO user_history (user_id, sessionId, itemInSession, artist, song, firstName, lastName)"
+        query += "VALUES(%s, %s, %s, %s, %s, %s, %s)"
+        session.execute(query, (
+        row.userId, row.sessionId, row.itemInSession, row.artist, row.song, row.firstName, row.lastName))
 
-    try:
-        rows = session.execute(user_history_select)
-    except Exception as e:
-        print(e)
+    select_rows(user_history_select)
 
-    for row in rows:
-        print(row)
-
-
-    try:
-        session.execute(song_history_table)
-    except Exception as e:
-        print(e)
+    create_or_drop_table(song_history_table)
 
     for i, row in df.iterrows():
-        session.execute(song_history_insert, (row.song, f'{row.firstName} {row.lastName}'))
-    try:
-        rows = session.execute(song_history_select)
-    except Exception as e:
-        print(e)
+        query = "INSERT INTO song_history (song, userId, firstName, lastName)"
+        query += "VALUES(%s, %s, %s, %s)"
+        session.execute(query, (row.song, row.userId, row.firstName, row.lastName))
 
-    for row in rows:
-        print(row)
+    select_rows(song_history_select)
 
 
 
